@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: springboot-app
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:mysql://mysql-db:3306/mydb
+      - key: SPRING_DATASOURCE_USERNAME
+        value: root
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: root
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: SPRING_JPA_SHOW_SQL
+        value: "true"
+    autoDeploy: true
+
+  - type: private_service
+    name: mysql-db
+    env: docker
+    dockerCommand: >
+      docker run --name mysql-db -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=mydb -p 3306:3306 mysql:8.0
+    disk:
+      name: mysql_data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
