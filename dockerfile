@@ -1,15 +1,23 @@
-# Use a lightweight base image with Java runtime
-FROM eclipse-temurin:21-jre-alpine
-
-# Set the working directory inside the container
+# Use OpenJDK 21 (or your Java version)
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-# Copy the JAR file into the container
-COPY target/*.jar app.jar
+# Copy Gradle/Maven build files if needed
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline -B
 
-# Expose the default Spring Boot port
+# Copy source code
+COPY src ./src
+
+# Package the app
+RUN ./mvnw package -DskipTests
+
+# -------- Runtime --------
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+
+COPY --from=builder /app/target/*.jar app.jar
+
 EXPOSE 8080
-
-# Run the Spring Boot app
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+ENTRYPOINT ["java","-jar","app.jar"]
