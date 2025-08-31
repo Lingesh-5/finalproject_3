@@ -1,32 +1,31 @@
-version: "3.9"
+version: '3.8'
 
 services:
   app:
     build: .
     container_name: springboot-app
-    restart: always
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/mydb
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
+      # Local DB settings (will be overridden in Render with real values)
+      DATABASE_URL: jdbc:postgresql://db:5432/mydb
+      DATABASE_USERNAME: myuser
+      DATABASE_PASSWORD: mypassword
+      SPRING_PROFILES_ACTIVE: dev
     depends_on:
       - db
 
   db:
-    image: mysql:8.0
-    container_name: mysql-db
-    restart: always
+    image: postgres:15
+    container_name: postgres-db
     environment:
-      MYSQL_DATABASE: mydb
-      MYSQL_ROOT_PASSWORD: root
+      POSTGRES_DB: mydb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
     ports:
-      - "3307:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  mysql_data:
+  postgres_data:
