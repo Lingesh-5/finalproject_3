@@ -17,7 +17,7 @@ services:
         value: "true"
     autoDeploy: true
 
-  - type: private_service
+  - type: pserv
     name: mysql-db
     env: docker
     dockerCommand: >
