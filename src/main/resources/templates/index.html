@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+<body class=" z-0" style="background-image: url(https://files.idyllic.app/files/static/3014913); background-size: cover; background-position: center;" >
+    <script>
+    function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        const requestOptions = {
+            method: "POST",
+            headers: myHeaders,
+            body: JSON.stringify({ "email": email, "password": password }),
+            redirect: "follow"
+        };
+        fetch("http://localhost:8080/auth/rest/login", requestOptions)
+            .then((response) => response.json())
+            .then((result) => {
+                const resp = result;
+                alert(resp.body.message);
+                sessionStorage.setItem("id", resp.body.user.id);
+                nextPage(resp.body.token, resp.body.user.roles);
+            })
+            .catch((error) => console.error(error));
+    }
+    function nextPage(token, roles) {
+        let url;
+        for (const role of roles) {
+            if (role.name == "ADMIN") {
+                url = "http://localhost:8080/admin/hotel";
+            } else if (role.name == "USER") {
+                url = "http://localhost:8080/user/hotel-list";
+            }
+        }
+        const myHeaders = new Headers();
+        myHeaders.append("Authorization", "Bearer " + token);
+        const requestOptions = {
+            method: "GET",
+            headers: myHeaders,
+            redirect: "follow"
+        };
+        fetch(url, requestOptions)
+            .then((response) => response.text())
+            .then((html) => {
+                document.write(html);
+                document.close();
+            })
+            .catch((error) => console.error(error));
+        sessionStorage.setItem("token", token);
+
+    }
+    function registerPage() {
+        const myHeaders = new Headers();
+        const requestOptions = {
+            method: "GET",
+            headers: myHeaders,
+            redirect: "follow"
+        };
+        fetch("http://localhost:8080/auth/register", requestOptions)
+            .then((response) => response.text())
+            .then((html) => {
+                document.write(html);
+                document.close();
+            })
+            .catch((error) => console.error(error));
+    }
+</script>
+    <div
+        class="container border border-secondary rounded shadow-lg bg-body bg-opacity-50 mt-5 p-5 z-1">
+        <h1 class="text-center bg-success text-success-emphasis" id="title"><strong>Login</strong></h1>
+        <hr /><br />
+        <div class="row">
+            <div class="col md-3"></div>
+            <div class="col md-6 p-4">
+                <form>
+                    <label for="email" class="form-label">Email:</label>
+                    <input type="email" class="form-control" name="email" id="email" />
+                    <label for="password" class="form-label">Password:</label>
+                    <input type="password" class="form-control" name="password" id="password" /><br />
+                    <input type="button" class="form-control btn btn-success" value="Login" onclick="login()" />
+                </form>
+                <br />
+                <span>Don't have an account?</span><input type="button" class="btn btn-link" value="Register"
+                    onclick="registerPage()" />
+            </div>
+            <div class="col md-3"></div>
+        </div>
+    </div>
+</body>
+</html>

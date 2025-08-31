@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+<body style="background-color: aliceblue;">
+    <script>
+        function onload() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch("http://localhost:8080/admin/rest/get-allBooking", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    loadData(result.body.bookings);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(bookings) {
+                let bookingNo = 1;
+                const tbody = document.getElementById("content");
+                tbody.innerHTML = '';
+                if (bookings.length == 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center">-- No Record --</td></tr>`;
+                } else {
+                    bookings.forEach(booking => {
+                        tbody.innerHTML = tbody.innerHTML + `<tr>
+            			<td>${bookingNo}</td>
+						<td>${booking.dateFrom}</td>
+            			<td>${booking.dateTo}</td>
+                        <td>${booking.persons}</td>
+                        <td>${booking.rooms}</td>
+                        <td>${booking.userId}</td>
+                        <td>${booking.status}</td>
+        		        </tr>`;
+                        bookingNo++;
+                    })
+                }
+            }
+        }
+        onload();
+        function hotelPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/admin/hotel", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Hotels" onclick="hotelPage()" />
+                </nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path
+                            d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container p-5 mt-5">
+            <div class="border border-secondary p-3">
+                <div class="border-bottom border-black">
+                    <h1>Bookings</h1>
+                </div><br />
+                <div id="liveAlertPlaceholder" class="position-fixed"></div>
+                <table class="table table-success table-striped table-hover">
+                    <thead>
+                        <th>Booking No:</th>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                        <th>Guests</th>
+                        <th>Rooms</th>
+                        <th>User Id</th>
+                        <th>Status</th>
+                    </thead>
+                    <tbody id="content">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

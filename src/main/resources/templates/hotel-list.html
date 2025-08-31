@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotels</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: aliceblue;">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+    <script>
+        function onload() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch("http://localhost:8080/user/rest/get-allHotelAndBooking", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    const resp = result;
+                    loadData(resp.body.hotels);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(hotels) {
+                const today = new Date();
+                const year = today.getFullYear();
+                let month = today.getMonth() + 1;
+                let day = today.getDate();
+                if (month < 10) {
+                    month = '0' + month;
+                }
+                if (day < 10) {
+                    day = '0' + day;
+                }
+                const formattedDate = `${year}-${month}-${day}`;
+
+                const searchFromDate = document.getElementById("searchFromDate");
+                const searchToDate = document.getElementById("searchToDate");
+                searchFromDate.min = formattedDate;
+                searchFromDate.value = formattedDate;
+                searchToDate.min = formattedDate;
+                searchToDate.value = formattedDate;
+
+                const content = document.getElementById("content");
+                content.innerHTML = '';
+                if (hotels.length == 0) {
+                    content.innerHTML = `<span>No Record</span>`;
+                } else {
+                    hotels.forEach(hotel => {
+                        content.innerHTML = content.innerHTML + `
+                        <div class="card shadow-lg p-3 mb-5 bg-white text-dark rounded">
+                        <h2 class="card-header bg-info-subtle text-info-emphasis">
+                            ${hotel.name}
+                        </h2>
+                        <div class="card-body">
+                            <div class="card-text">${hotel.city}</div>
+                            <div class="card-text">${hotel.address}</div>
+                            <div class="card-text"><span class="bg-success-subtle text-success-emphasis">${hotel.rating} <svg xmlns="http://www.w3.org/2000/svg" 
+                                height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000">
+                                <path d="m352-293 128-76 129 76-34-144 111-95-147-13-59-137-59 137-147 13 112 95-34 144ZM243-144l63-266L96-589l276-24 108-251 108 252 276 23-210 179 63 266-237-141-237 141Zm237-333Z"/></svg></span></div>
+                            <div class="card-text">₹ ${hotel.price}</div>
+                            <p class="card-text">${hotel.description}</p>
+                            <div class="row">
+                                <div class="col-10"></div>
+                                <div class="col-2">
+                                <input type="button" class="btn btn-outline-primary" value="Book" onclick="saveBooking(${hotel.id}, ${hotel.rooms})" />
+                                </div>
+                            </div>
+                        </div>
+                        </div>`
+                    })
+                }
+            }
+        }
+        onload();
+        function search() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch("http://localhost:8080/user/rest/get-allHotelAndBooking", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    loadData(result.body.hotels, result.body.bookings);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(hotels, bookings) {
+
+                const location = document.getElementById("location").value;
+                if (location != "") {
+                    hotels = hotels.filter(hotel => hotel.city.toLowerCase() == location.toLowerCase());
+                }
+
+                const searchFromDate = document.getElementById("searchFromDate").value;
+                const searchToDate = document.getElementById("searchToDate").value;
+                if (searchFromDate != "" && searchToDate != "") {
+                    bookings = bookings.filter(booking => (booking.dateFrom <= searchFromDate && booking.dateTo >= searchToDate) || booking.dateFrom == searchToDate || booking.dateTo == searchFromDate || booking.dateFrom == searchFromDate || booking.dateTo == searchToDate ||
+                        (booking.dateFrom <= searchFromDate && booking.dateTo >= searchFromDate) || (booking.dateFrom <= searchToDate && booking.dateTo >= searchToDate));
+                }
+
+                const rooms = document.getElementById("rooms").value;
+
+                const content = document.getElementById("content");
+                content.innerHTML = '';
+                if (hotels.length == 0) {
+                    content.innerHTML = `<span>No Record</span>`;
+                } else {
+                    let hotelId = null;
+                    let temp = false;
+                    hotels.forEach(hotel => {
+                        bookings.forEach(booking => {
+                            if (booking.hotelId == hotel.id) {
+                                const availability = hotel.rooms - (booking.rooms + parseInt(rooms));
+                                if (availability < 0) {
+                                    hotelId = hotel.id;
+                                    temp = true;
+                                }
+                            }
+                        });
+                        if ((hotelId != hotel.id && hotelId != null) || (hotel.rooms >= parseInt(rooms) && temp == false)) {
+                            content.innerHTML = content.innerHTML + `
+                            <div class="card shadow-lg p-3 mb-5 bg-white text-dark rounded">
+                        <h2 class="card-header bg-info-subtle text-info-emphasis">
+                            ${hotel.name}
+                        </h2>
+                        <div class="card-body">
+                            <div class="card-text">${hotel.city}</div>
+                            <div class="card-text">${hotel.address}</div>
+                            <div class="card-text"><span class="bg-success-subtle text-success-emphasis">${hotel.rating} <svg xmlns="http://www.w3.org/2000/svg" 
+                                height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000">
+                                <path d="m352-293 128-76 129 76-34-144 111-95-147-13-59-137-59 137-147 13 112 95-34 144ZM243-144l63-266L96-589l276-24 108-251 108 252 276 23-210 179 63 266-237-141-237 141Zm237-333Z"/></svg></span></div>
+                            <div class="card-text">₹ ${hotel.price}</div>    
+                            <p class="card-text">${hotel.description}</p>
+                            <div class="row">
+                                <div class="col-10"></div>
+                                <div class="col-2">
+                                <input type="button" class="btn btn-outline-primary" value="Book" onclick="saveBooking(${hotel.id}, 0)" />
+                                </div>
+                            </div>
+                        </div>
+                        </div>`
+                        }
+                    })
+                }
+            }
+        }
+        function saveBooking(hotelId, totalRooms) {
+            const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+            const appendAlert = (message, type) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = [
+                    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+                    `   <div>${message}</div>`,
+                    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+                    '</div>'
+                ].join('');
+
+                alertPlaceholder.appendChild(wrapper);
+            }
+            if (document.getElementById("persons").value != "") {
+                const userId = sessionStorage.getItem("id");
+                const token = sessionStorage.getItem("token");
+                const fromDate = document.getElementById("searchFromDate").value;
+                const toDate = document.getElementById("searchToDate").value;
+                const persons = document.getElementById("persons").value;
+                const rooms = document.getElementById("rooms").value;
+                if (totalRooms >= parseInt(rooms) || totalRooms == 0) {
+                    const myHeaders = new Headers();
+                    myHeaders.append("Content-Type", "application/json");
+                    myHeaders.append("Authorization", "Bearer " + token);
+
+                    const requestOptions = {
+                        method: "POST",
+                        headers: myHeaders,
+                        body: JSON.stringify({ "fromDate": fromDate, "toDate": toDate, "persons": persons, "userId": userId, "hotelId": hotelId, "status": "BOOKED", "rooms": rooms }),
+                        redirect: "follow"
+                    };
+                    fetch("http://localhost:8080/user/rest/save-booking", requestOptions)
+                        .then((response) => response.text())
+                        .then((result) => {
+                            alert(result);
+                            paymentPage();
+                        })
+                        .catch((error) => console.error(error));
+                } else {
+                    appendAlert("Not enough rooms available, Kindly change number of rooms!", "warning");
+                }
+
+            } else {
+                appendAlert("Please enter guests!", "warning");
+            }
+        }
+        function paymentPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/payment", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function myBookingsPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/userBooking-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="My Bookings" onclick="myBookingsPage()" />
+                </nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path
+                            d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col-3 p-5 mt-5">
+                    <h4>Search</h4>
+                    <div id="liveAlertPlaceholder" class="position-fixed z-1"></div><br />
+                    <label for="location" class="form-label"><strong>Destination:</strong></label>
+                    <input type="text" placeholder="Enter city" id="location" name="location"
+                        class="form-control" /><br />
+                    <label for="searchFromDate" class="form-label"><strong>From date:</strong></label>
+                    <input type="date" id="searchFromDate" name="searchFromDate" class="form-control" />
+                    <label for="searchToDate" class="form-label"><strong>To date:</strong></label>
+                    <input type="date" id="searchToDate" name="searchToDate" class="form-control" />
+                    <label for="rooms" class="form-label"><strong>Rooms:</strong></label>
+                    <input type="number" id="rooms" name="rooms" class="form-control" placeholder="Enter rooms"
+                        value="1" /><br />
+                    <input type="button" value="Search" class="btn btn-primary" onclick="search()" />
+                </div>
+                <div class="col-9 p-5 mt-5">
+                    <div class="border border-secondary p-4 z-0">
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <span class="input-group-text">Guests:</span>
+                                    <input type="number" id="persons" name="persons" class="form-control"
+                                        placeholder="Enter Guests" />
+                                </div>
+                            </div>
+                            <div class="col-auto"></div>
+                        </div>
+                        <div id="content" class="p-4"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</body>
+
+</html>

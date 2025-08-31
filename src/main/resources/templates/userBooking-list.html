@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: aliceblue;">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+    <script>
+        function onload() {
+            const token = sessionStorage.getItem("token");
+            const userId = sessionStorage.getItem("id");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/user/rest/get-booking/${userId}`, requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    loadData(result.body.bookings);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(bookings) {
+                let bookingNo = 1;
+                const tbody = document.getElementById("content");
+                tbody.innerHTML = '';
+                if (bookings.length == 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center">-- No Record --</td></tr>`;
+                } else {
+                    bookings.forEach(booking => {
+                        let buttonEl;
+                        if (booking.status == "CANCELLED") {
+                            buttonEl = `<button class="btn btn-danger" disabled>Cancelled</button>`;
+                        } else {
+                            buttonEl = `<button onclick="cancelBooking('${booking.id}')" class="btn btn-danger">Cancel</button>`;
+                        }
+                        tbody.innerHTML = tbody.innerHTML + `<tr>
+            			<td>${bookingNo}</td>
+						<td>${booking.dateFrom}</td>
+            			<td>${booking.dateTo}</td>
+                        <td>${booking.persons}</td>
+                        <td>${booking.rooms}</td>
+                        <td>${booking.status}</td>
+                		<td>`+ buttonEl + `</td>
+        		        </tr>`;
+                        bookingNo++;
+                    })
+                }
+            }
+        }
+        onload();
+        function hotelListPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/hotel-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function cancelBooking(bookingId) {
+            const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+            const appendAlert = (message, type) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = [
+                    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+                    `   <div>${message}</div>`,
+                    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+                    '</div>'
+                ].join('');
+
+                alertPlaceholder.appendChild(wrapper);
+            }
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: JSON.stringify({ "status": "CANCELLED", "bookingId": bookingId }),
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/rest/save-booking", requestOptions)
+                .then((response) => response.text())
+                .then((result) => {
+                    if (result == "Booked successfully") {
+                        appendAlert("Cancelled successfully", "success");
+                        onload();
+                    }
+                })
+                .catch((error) => console.error(error));
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Hotels" onclick="hotelListPage()" />
+                </nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container p-5 mt-5">
+            <div class="border border-secondary p-3">
+                <div class="border-bottom border-black">
+                    <h1>My Bookings</h1>
+                </div><br />
+                <div id="liveAlertPlaceholder" class="position-fixed"></div>
+                <table class="table table-success table-striped table-hover">
+                    <thead>
+                        <th>Booking No:</th>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                        <th>Guests</th>
+                        <th>Rooms</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </thead>
+                    <tbody id="content">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

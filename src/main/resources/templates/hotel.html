@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: aliceblue;">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+    <script>
+        function save() {
+            const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+            const appendAlert = (message, type) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = [
+                    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+                    `   <div>${message}</div>`,
+                    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+                    '</div>'
+                ].join('');
+
+                alertPlaceholder.appendChild(wrapper);
+            }
+            const form = document.getElementById("hotel");
+            if (form.checkValidity()) {
+                const name = document.getElementById("name").value;
+                const price = document.getElementById("price").value;
+                const rating = document.getElementById("rating").value;
+                const rooms = document.getElementById("rooms").value;
+                const city = document.getElementById("city").value;
+                const address = document.getElementById("address").value;
+                const description = document.getElementById("description").value;
+                const hotelId = document.getElementById("hotelId").value;
+
+                const token = sessionStorage.getItem("token");
+
+                const myHeaders = new Headers();
+                myHeaders.append("Content-Type", "application/json");
+                myHeaders.append("Authorization", "Bearer " + token);
+
+                const requestOptions = {
+                    method: "POST",
+                    headers: myHeaders,
+                    body: JSON.stringify({ "name": name, "price": price, "rating": rating, "rooms": rooms, "city": city, "address": address, "description": description, "id": hotelId }),
+                    redirect: "follow"
+                };
+                fetch("http://localhost:8080/admin/rest/save-hotel", requestOptions)
+                    .then((response) => response.json())
+                    .then((result) => {
+                        if (result.name) {
+                            document.getElementById("name").value = result.name;
+                        }
+                        if (result.city) {
+                            document.getElementById("city").value = result.city;
+                        }
+                        if (result.address) {
+                            document.getElementById("address").value = result.address;
+                        }
+                        if (result.description) {
+                            document.getElementById("description").value = result.description;
+                        }
+                        if (result.rating) {
+                            document.getElementById("rating").value = result.rating;
+                        }
+                        if (result.status == "Saved successfully") {
+                            appendAlert(result.status, "success");
+                            onload();
+                        }
+                    })
+                    .catch((error) => console.error(error));
+            } else {
+                form.reportValidity();
+            }
+        }
+        function onload() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch("http://localhost:8080/admin/rest/get-hotel", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    const resp = result;
+                    loadData(resp.body.hotels);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(hotels) {
+                const tbody = document.getElementById("content");
+                tbody.innerHTML = '';
+                if (hotels.length == 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center">-- No Record --</td></tr>`;
+                } else {
+                    hotels.forEach(hotel => {
+                        tbody.innerHTML = tbody.innerHTML + `<tr>
+            			<td>${hotel.name}</td>
+						<td>${hotel.city}</td>
+            			<td>${hotel.address}</td>
+                        <td>${hotel.description}</td>
+                        <td>${hotel.rating}</td>
+                        <td>₹ ${hotel.price}</td>
+                        <td>${hotel.rooms}</td>
+                		<td>
+                    		<button onclick="editHotel('${hotel.id}')" class="btn btn-secondary">Edit</button>
+                            <button onclick="deleteHotel('${hotel.id}')" class="btn btn-danger">Delete</button>
+                		</td>
+        		        </tr>`
+                    })
+                }
+            }
+        }
+        onload();
+        function deleteHotel(id) {
+            const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+            const appendAlert = (message, type) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = [
+                    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+                    `   <div>${message}</div>`,
+                    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+                    '</div>'
+                ].join('');
+
+                alertPlaceholder.appendChild(wrapper);
+            }
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "DELETE",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/admin/rest/delete-hotel/${id}`, requestOptions)
+                .then((response) => response.text())
+                .then((result) => {
+                    appendAlert(result, "success");
+                    onload();
+                })
+                .catch((error) => console.error(error));
+        }
+        function editHotel(id) {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/admin/rest/get-hotelById/${id}`, requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    document.getElementById("name").value = result.body.hotel.name;
+                    document.getElementById("city").value = result.body.hotel.city;
+                    document.getElementById("address").value = result.body.hotel.address;
+                    document.getElementById("description").value = result.body.hotel.description;
+                    document.getElementById("rating").value = result.body.hotel.rating;
+                    document.getElementById("price").value = result.body.hotel.price;
+                    document.getElementById("hotelId").value = result.body.hotel.id;
+                    document.getElementById("rooms").value = result.body.hotel.rooms;
+                })
+                .catch((error) => console.error(error));
+        }
+        function resetAll() {
+            document.getElementById("name").value = null;
+            document.getElementById("city").value = null;
+            document.getElementById("address").value = null;
+            document.getElementById("description").value = null;
+            document.getElementById("rating").value = null;
+            document.getElementById("price").value = null;
+            document.getElementById("hotelId").value = null;
+            document.getElementById("rooms").value = null;
+        }
+        function bookingListPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/admin/booking-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function userListPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/admin/user-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function paymentListPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/admin/payment-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Users" onclick="userListPage()" />
+                </nav>
+            </div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Payments" onclick="paymentListPage()" />
+                </nav>
+            </div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Bookings" onclick="bookingListPage()" />
+                </nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path
+                            d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container p-5 mt-5">
+            <div class="border border-secondary p-4">
+                <div class="border-bottom border-black">
+                    <h1>Add Hotel</h1>
+                </div><br />
+                <div id="liveAlertPlaceholder" class="position-fixed"></div>
+                <form id="hotel">
+                    <div class="row">
+                        <div class="col md-6 p-4">
+                            <label for="name" class="form-label">Name:</label>
+                            <input type="text" class="form-control" id="name" name="name" />
+                            <label for="price" class="form-label">Price:</label>
+                            <input type="number" class="form-control" id="price" name="price" required />
+                            <label for="rating" class="form-label">Rating:</label>
+                            <input type="text" class="form-control" id="rating" name="rating" />
+                            <label for="rooms" class="form-label">Rooms:</label>
+                            <input type="number" class="form-control" id="rooms" name="rooms" required /><br />
+                            <input type="button" value="Save" class="btn btn-primary" onclick="save()" />
+                            <input type="button" value="New/Reset" class="btn btn-warning" onclick="resetAll()" />
+                            <input type="hidden" id="hotelId" />
+                        </div>
+                        <div class="col md-6 p-4">
+                            <label for="city" class="form-label">City:</label>
+                            <input type="text" class="form-control" id="city" name="city" />
+                            <label for="address" class="form-label">Address:</label>
+                            <input type="text" class="form-control" id="address" name="address" />
+                            <label for="description" class="form-label">Description:</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="border-bottom border-black">
+                    <h1>Hotels List</h1>
+                </div><br />
+                <table class="table table-success table-striped table-hover">
+                    <thead>
+                        <th>Name</th>
+                        <th>City</th>
+                        <th>Address</th>
+                        <th>Description</th>
+                        <th>Rating</th>
+                        <th>Price</th>
+                        <th>Rooms</th>
+                        <th>Actions</th>
+                    </thead>
+                    <tbody id="content">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

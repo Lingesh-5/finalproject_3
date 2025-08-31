@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: aliceblue;">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        function onload() {
+            const token = sessionStorage.getItem("token");
+            const userId = sessionStorage.getItem("id");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/user/rest/get-bookingAndHotel/${userId}`, requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    loadData(result.body.booking, result.body.hotel);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(booking, hotel) {
+                let totalPrice;
+                //Period between two dates
+                const period = (new Date(booking.dateTo) - new Date(booking.dateFrom)) / (1000 * 60 * 60 * 24);
+                totalPrice = booking.persons * hotel.price * (period+1);
+                const content = document.getElementById("content");
+                const hotelContent = document.getElementById("hotelContent");
+                if (booking == null && hotel == null) {
+                    content.innerHTML = `<span>No Record</span>`;
+                } else {
+                    content.innerHTML = `
+                        <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">${booking.status}</h5>
+                            <div class="row">
+                                <div class="col-auto shadow-lg">${booking.dateFrom}</div><div class="col-auto"> - </div>
+                                <div class="col-auto shadow-lg">${booking.dateTo}</div>
+                            </div>
+                            <div class="card-text">${booking.persons} Guests</div><hr />
+                            <div class="row">
+                                <div class="col-5">Total Price:</div>
+                                <div class="col-3"></div>
+                                <div class="col-4 text-end">₹ ${totalPrice}</div>
+                            </div><br />  
+                            <input type="button" class="form-control btn btn-primary" value="Proceed to pay" onclick="pay(${totalPrice})" />
+                            <input type="hidden" value="${booking.id}" id="bookingId" />
+                        </div>
+                        </div>`;
+                    hotelContent.innerHTML = `
+                        <div class="p-3"> 
+                        <h1 class="text-xxl">${hotel.name}</h2>
+                        <p>${hotel.address}</p>
+                        <form id="paymentDetails">
+                        <div class="row">
+                            <div class="col-auto">
+                                <label for="fullName" class="form-label">Full Name:</label>
+                                <input type="text" class="form-control" id="fullName" name="fullName" required />
+                            </div>
+                            <div class="col-auto">
+                                <label for="email" class="form-label">Email:</label>
+                                <input type="email" class="form-control" id="email" name="email" required />
+                            </div>
+                            <div class="col-auto">
+                                <label for="mobileNumber" class="form-label">Mobile Number:</label>
+                                <input type="tel" class="form-control" id="mobileNumber" name="mobileNumber" required />
+                            </div>
+                        </div>
+                        </form>
+                        </div>`;
+                }
+            }
+        }
+        onload();
+        async function pay(totalPrice) {
+            const form = document.getElementById("paymentDetails");
+            if (form.checkValidity()) {
+                const token = sessionStorage.getItem("token");
+                const id = sessionStorage.getItem("id");
+                const mobileNumber = document.getElementById("mobileNumber").value;
+                const email = document.getElementById("email").value;
+                const fullName = document.getElementById("fullName").value;
+
+                const res = await fetch('/rest/payments/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ amountInRupees: totalPrice, userId: id })
+                });
+                const { key, orderId, amount, currency } = await res.json();
+
+                const options = {
+                    key,
+                    amount,
+                    currency,
+                    order_id: orderId,
+                    name: "Hotel Booking",
+                    description: "Booking payment",
+                    prefill: { name: fullName, email: email, contact: mobileNumber },
+                    handler: async function (response) {
+                        const verifyRes = await fetch('/rest/payments/verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                            body: JSON.stringify({
+                                razorpayPaymentId: response.razorpay_payment_id,
+                                razorpayOrderId: response.razorpay_order_id,
+                                razorpaySignature: response.razorpay_signature
+                            })
+                        });
+                        const result = await verifyRes.json();
+                        updateBooking("CONFIRMED");
+                    }
+                };
+                new Razorpay(options).open();
+
+            } else {
+                form.reportValidity();
+            }
+        }
+        function updateBooking(statusValue) {
+            const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+            const appendAlert = (message, type) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = [
+                    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+                    `   <div>${message}</div>`,
+                    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+                    '</div>'
+                ].join('');
+
+                alertPlaceholder.appendChild(wrapper);
+            }
+            const bookingId = document.getElementById("bookingId").value;
+      
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: JSON.stringify({ "status": statusValue, "bookingId": bookingId }),
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/rest/save-booking", requestOptions)
+                .then((response) => response.text())
+                .then((result) => {
+                    if(result == "Booked successfully") {
+                        appendAlert("SUCCESS", "success");
+                    }
+                })
+                .catch((error) => console.error(error));
+        }
+        function hotelListPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/hotel-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Hotels" onclick="hotelListPage()" />
+                </nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path
+                            d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container p-5 mt-5">
+            <div class="border border-secondary">
+                <div id="liveAlertPlaceholder" class="position-fixed"></div>
+                <div class="row">
+                    <div class="col-md-8" id="hotelContent"></div>
+                    <div class="col-md-4 p-3">
+                        <div id="content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
