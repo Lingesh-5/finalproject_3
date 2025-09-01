@@ -15,6 +15,7 @@
         crossorigin="anonymous"></script>
     <script>
         function save() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
             const appendAlert = (message, type) => {
                 const wrapper = document.createElement('div');
@@ -50,7 +51,7 @@
                     body: JSON.stringify({ "name": name, "price": price, "rating": rating, "rooms": rooms, "city": city, "address": address, "description": description, "id": hotelId }),
                     redirect: "follow"
                 };
-                fetch("http://localhost:8080/admin/rest/save-hotel", requestOptions)
+                fetch(`${API_BASE_URL}/admin/rest/save-hotel`, requestOptions)
                     .then((response) => response.json())
                     .then((result) => {
                         if (result.name) {
@@ -79,6 +80,7 @@
             }
         }
         function onload() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -88,7 +90,7 @@
                 method: "GET",
                 headers: myHeaders
             };
-            fetch("http://localhost:8080/admin/rest/get-hotel", requestOptions)
+            fetch(`${API_BASE_URL}/admin/rest/get-hotel`, requestOptions)
                 .then((response) => response.json())
                 .then((result) => {
                     const resp = result;
@@ -122,6 +124,7 @@
         }
         onload();
         function deleteHotel(id) {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
             const appendAlert = (message, type) => {
                 const wrapper = document.createElement('div');
@@ -143,7 +146,7 @@
                 method: "DELETE",
                 headers: myHeaders
             };
-            fetch(`http://localhost:8080/admin/rest/delete-hotel/${id}`, requestOptions)
+            fetch(`${API_BASE_URL}/admin/rest/delete-hotel/${id}`, requestOptions)
                 .then((response) => response.text())
                 .then((result) => {
                     appendAlert(result, "success");
@@ -152,6 +155,7 @@
                 .catch((error) => console.error(error));
         }
         function editHotel(id) {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -161,7 +165,7 @@
                 method: "GET",
                 headers: myHeaders
             };
-            fetch(`http://localhost:8080/admin/rest/get-hotelById/${id}`, requestOptions)
+            fetch(`${API_BASE_URL}/admin/rest/get-hotelById/${id}`, requestOptions)
                 .then((response) => response.json())
                 .then((result) => {
                     document.getElementById("name").value = result.body.hotel.name;
@@ -186,6 +190,7 @@
             document.getElementById("rooms").value = null;
         }
         function bookingListPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -195,7 +200,7 @@
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/admin/booking-list", requestOptions)
+            fetch(`${API_BASE_URL}/admin/booking-list`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);
@@ -204,6 +209,7 @@
                 .catch((error) => console.error(error));
         }
         function userListPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -213,7 +219,7 @@
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/admin/user-list", requestOptions)
+            fetch(`${API_BASE_URL}/admin/user-list`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);
@@ -222,6 +228,7 @@
                 .catch((error) => console.error(error));
         }
         function paymentListPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -231,7 +238,7 @@
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/admin/payment-list", requestOptions)
+            fetch(`${API_BASE_URL}/admin/payment-list`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);

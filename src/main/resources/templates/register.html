@@ -36,6 +36,7 @@
             h2Tag.innerText = "Admin Register";
         }
         function register() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const form = document.getElementById("register");
             if (form.checkValidity()) {
                 const name = document.getElementById("name").value;
@@ -52,7 +53,7 @@
                     body: JSON.stringify({ "name": name, "email": email, "password": password, "role": role }),
                     redirect: "follow"
                 };
-                fetch("http://localhost:8080/auth/rest/save-register", requestOptions)
+                fetch(`${API_BASE_URL}/auth/rest/save-register`, requestOptions)
                     .then((response) => response.text())
                     .then((result) => {
                         alert(result);

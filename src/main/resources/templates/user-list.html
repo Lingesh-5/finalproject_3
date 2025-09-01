@@ -12,6 +12,7 @@
 <body style="background-color: aliceblue;">
     <script>
         function onload() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -21,7 +22,7 @@
                 method: "GET",
                 headers: myHeaders
             };
-            fetch("http://localhost:8080/admin/rest/get-allUser", requestOptions)
+            fetch(`${API_BASE_URL}/admin/rest/get-allUser`, requestOptions)
                 .then((response) => response.json())
                 .then((result) => {
                     loadData(result.body.users);
@@ -49,6 +50,7 @@
         }
         onload();
         function hotelPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -58,7 +60,7 @@
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/admin/hotel", requestOptions)
+            fetch(`${API_BASE_URL}/admin/hotel`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);

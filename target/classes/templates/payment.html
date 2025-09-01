@@ -16,6 +16,7 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
         function onload() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
             const userId = sessionStorage.getItem("id");
 
@@ -26,7 +27,7 @@
                 method: "GET",
                 headers: myHeaders
             };
-            fetch(`http://localhost:8080/user/rest/get-bookingAndHotel/${userId}`, requestOptions)
+            fetch(`${API_BASE_URL}/user/rest/get-bookingAndHotel/${userId}`, requestOptions)
                 .then((response) => response.json())
                 .then((result) => {
                     loadData(result.body.booking, result.body.hotel);
@@ -87,6 +88,7 @@
         }
         onload();
         async function pay(totalPrice) {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const form = document.getElementById("paymentDetails");
             if (form.checkValidity()) {
                 const token = sessionStorage.getItem("token");
@@ -95,7 +97,7 @@
                 const email = document.getElementById("email").value;
                 const fullName = document.getElementById("fullName").value;
 
-                const res = await fetch('/rest/payments/create-order', {
+                const res = await fetch(`${API_BASE_URL}/rest/payments/create-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ amountInRupees: totalPrice, userId: id })
@@ -111,7 +113,7 @@
                     description: "Booking payment",
                     prefill: { name: fullName, email: email, contact: mobileNumber },
                     handler: async function (response) {
-                        const verifyRes = await fetch('/rest/payments/verify', {
+                        const verifyRes = await fetch(`${API_BASE_URL}/rest/payments/verify`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                             body: JSON.stringify({
@@ -131,6 +133,7 @@
             }
         }
         function updateBooking(statusValue) {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
             const appendAlert = (message, type) => {
                 const wrapper = document.createElement('div');
@@ -157,7 +160,7 @@
                 body: JSON.stringify({ "status": statusValue, "bookingId": bookingId }),
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/user/rest/save-booking", requestOptions)
+            fetch(`${API_BASE_URL}/user/rest/save-booking`, requestOptions)
                 .then((response) => response.text())
                 .then((result) => {
                     if(result == "Booked successfully") {
@@ -167,6 +170,7 @@
                 .catch((error) => console.error(error));
         }
         function hotelListPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -176,7 +180,7 @@
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/user/hotel-list", requestOptions)
+            fetch(`${API_BASE_URL}/user/hotel-list`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);

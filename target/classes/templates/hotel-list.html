@@ -15,6 +15,7 @@
         crossorigin="anonymous"></script>
     <script>
         function onload() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -24,7 +25,7 @@
                 method: "GET",
                 headers: myHeaders
             };
-            fetch("http://localhost:8080/user/rest/get-allHotelAndBooking", requestOptions)
+            fetch(`${API_BASE_URL}/user/rest/get-allHotelAndBooking`, requestOptions)
                 .then((response) => response.json())
                 .then((result) => {
                     const resp = result;
@@ -85,6 +86,7 @@
         }
         onload();
         function search() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -94,7 +96,7 @@
                 method: "GET",
                 headers: myHeaders
             };
-            fetch("http://localhost:8080/user/rest/get-allHotelAndBooking", requestOptions)
+            fetch(`${API_BASE_URL}/user/rest/get-allHotelAndBooking`, requestOptions)
                 .then((response) => response.json())
                 .then((result) => {
                     loadData(result.body.hotels, result.body.bookings);
@@ -162,6 +164,7 @@
             }
         }
         function saveBooking(hotelId, totalRooms) {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
             const appendAlert = (message, type) => {
                 const wrapper = document.createElement('div');
@@ -192,7 +195,7 @@
                         body: JSON.stringify({ "fromDate": fromDate, "toDate": toDate, "persons": persons, "userId": userId, "hotelId": hotelId, "status": "BOOKED", "rooms": rooms }),
                         redirect: "follow"
                     };
-                    fetch("http://localhost:8080/user/rest/save-booking", requestOptions)
+                    fetch(`${API_BASE_URL}/user/rest/save-booking`, requestOptions)
                         .then((response) => response.text())
                         .then((result) => {
                             alert(result);
@@ -208,6 +211,7 @@
             }
         }
         function paymentPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -217,7 +221,7 @@
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/user/payment", requestOptions)
+            fetch(`${API_BASE_URL}/user/payment`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);
@@ -226,6 +230,7 @@
                 .catch((error) => console.error(error));
         }
         function myBookingsPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const token = sessionStorage.getItem("token");
 
             const myHeaders = new Headers();
@@ -235,7 +240,7 @@
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/user/userBooking-list", requestOptions)
+            fetch(`${API_BASE_URL}/user/userBooking-list`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);
