@@ -19,7 +19,7 @@
                 admin();
             });
             const roleInput = document.getElementById("role");
-            roleInput.value = "User";
+            roleInput.value = "USER";
             const h2Tag = document.getElementById("title");
             h2Tag.innerText = "User Register";
         }
@@ -64,13 +64,14 @@
             }
         }
         function loginPage() {
+            const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
             const myHeaders = new Headers();
             const requestOptions = {
                 method: "GET",
                 headers: myHeaders,
                 redirect: "follow"
             };
-            fetch("http://localhost:8080/", requestOptions)
+            fetch(`${API_BASE_URL}/`, requestOptions)
                 .then((response) => response.text())
                 .then((html) => {
                     document.write(html);
