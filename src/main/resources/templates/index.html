@@ -58,13 +58,14 @@
 
     }
     function registerPage() {
+        const API_BASE_URL = "https://finalproject-3-by6p.onrender.com";
         const myHeaders = new Headers();
         const requestOptions = {
             method: "GET",
             headers: myHeaders,
             redirect: "follow"
         };
-        fetch("http://localhost:8080/auth/register", requestOptions)
+        fetch(`${API_BASE_URL}/auth/register`, requestOptions)
             .then((response) => response.text())
             .then((html) => {
                 document.write(html);

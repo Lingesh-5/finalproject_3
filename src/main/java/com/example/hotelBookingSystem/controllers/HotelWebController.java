@@ -3,12 +3,14 @@ package com.example.hotelBookingSystem.controllers;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/admin")
 @EnableMethodSecurity
+@CrossOrigin("*")
 public class HotelWebController {
 
     @GetMapping("/hotel")
