@@ -1,4 +1,4 @@
-# Created at 2025-09-01T13:18:27.870
+# Created at 2025-09-01T15:52:06.333
 Boot Manifest-JAR contains absolute paths in classpath 'd:\GUVI\Final Project\hotelBookingSystem\target\test-classes'
 Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
 'other' has different root
